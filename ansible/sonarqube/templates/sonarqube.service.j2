@@ -1,0 +1,23 @@
+[Unit]
+Description=SonarQube service
+After=syslog.target network.target postgresql.service
+
+[Service]
+Type=forking
+ExecStart={{ sonarqube_home }}/bin/linux-x86-64/sonar.sh start
+ExecStop={{ sonarqube_home }}/bin/linux-x86-64/sonar.sh stop
+User={{ sonarqube_user }}
+Group={{ sonarqube_group }}
+RestartSec=10
+Restart=on-failure
+SyslogIdentifier=sonarqube
+LimitNOFILE=131072
+LimitNPROC=8192
+TimeoutStartSec=600
+TimeoutStopSec=60
+PIDFile={{ sonarqube_home }}/bin/linux-x86-64/SonarQube.pid
+Environment="JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64"
+Environment="SONAR_JAVA_PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
+
+[Install]
+WantedBy=multi-user.target

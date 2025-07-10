@@ -1,0 +1,22 @@
+# SonarQube Configuration
+# Database settings
+sonar.jdbc.username={{ postgres_user }}
+sonar.jdbc.password={{ postgres_password }}
+sonar.jdbc.url=jdbc:postgresql://localhost:5432/{{ postgres_db }}
+
+# Web server settings
+sonar.web.host=0.0.0.0
+sonar.web.port=9000
+sonar.web.context=/
+
+# Elasticsearch settings
+sonar.search.host=127.0.0.1
+sonar.search.port=9001
+
+# Logging
+sonar.log.level=INFO
+sonar.path.logs={{ sonarqube_home }}/logs
+
+# Other settings
+sonar.path.data={{ sonarqube_home }}/data
+sonar.path.temp={{ sonarqube_home }}/temp
