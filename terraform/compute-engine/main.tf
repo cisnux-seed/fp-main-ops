@@ -32,9 +32,26 @@ resource "google_compute_instance" "e2_medium" {
 
     access_config {}
   }
+
+  metadata = {
+    ssh-keys = "${var.ssh_user}:${file("~/.ssh/google_compute_engine.pub")}"
+  }
+
+  tags = ["ssh-access"]
+}
+
+variable "ssh_user" {
+  description = "SSH username for the instance"
+  type        = string
+  default     = "cisnux"
 }
 
 output "instance_ip" {
   description = "The public IP address of the instance"
   value       = google_compute_instance.e2_medium.network_interface[0].access_config[0].nat_ip
+}
+
+output "ssh_command" {
+  description = "SSH command to connect to the instance"
+  value       = "ssh -i ~/.ssh/google_compute_engine ${var.ssh_user}@${google_compute_instance.e2_medium.network_interface[0].access_config[0].nat_ip}"
 }
