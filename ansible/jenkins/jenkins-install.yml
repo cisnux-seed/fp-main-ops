@@ -1,0 +1,40 @@
+---
+- name: Install Jenkins on GCP VM
+  hosts: jenkins
+  become: yes
+  tasks:
+
+    - name: Install Java (Jenkins dependency)
+      apt:
+        name: openjdk-11-jdk
+        state: present
+        update_cache: yes
+
+    - name: Add Jenkins repository key
+      apt_key:
+        url: https://pkg.jenkins.io/debian/jenkins.io.key
+        state: present
+
+    - name: Add Jenkins repository
+      apt_repository:
+        repo: 'deb https://pkg.jenkins.io/debian/ stable main'
+        state: present
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+        update_cache: yes
+
+    - name: Ensure Jenkins is started and enabled
+      service:
+        name: jenkins
+        state: started
+        enabled: true
+
+    - name: Allow port 8080 (Jenkins) on UFW (jika VM menggunakan UFW)
+      ufw:
+        rule: allow
+        port: 8080
+        proto: tcp
+      ignore_errors: true
