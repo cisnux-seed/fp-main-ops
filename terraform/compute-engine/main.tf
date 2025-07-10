@@ -14,9 +14,9 @@ provider "google" {
   zone    = "asia-southeast2-a"
 }
 
-resource "google_compute_instance" "e2_micro" {
-  name         = "e2-micro-instance"
-  machine_type = "e2-micro"
+resource "google_compute_instance" "e2_medium" {
+  name         = "e2-medium-instance"
+  machine_type = "e2-medium"
   zone         = "asia-southeast2-a"
 
   boot_disk {
@@ -36,5 +36,5 @@ resource "google_compute_instance" "e2_micro" {
 
 output "instance_ip" {
   description = "The public IP address of the instance"
-  value       = google_compute_instance.e2_micro.network_interface[0].access_config[0].nat_ip
+  value       = google_compute_instance.e2_medium.network_interface[0].access_config[0].nat_ip
 }
