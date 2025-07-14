@@ -1,0 +1,52 @@
+apiVersion: v1
+baseDomain: skynux.fun
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform:
+    gcp:
+      type: e2-highmem-4
+      zones:
+      - asia-southeast2-a
+      osDisk:
+        diskType: pd-ssd
+        diskSizeGB: 120
+  replicas: 1
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform:
+    gcp:
+      type: e2-standard-2
+      zones:
+      - asia-southeast2-a
+      - asia-southeast2-b
+      osDisk:
+        diskType: pd-ssd
+        diskSizeGB: 60
+  replicas: 0
+metadata:
+  name: ocp-one-gate-payment
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.0.0/19          # Control plane subnet
+  - cidr: 10.0.32.0/19         # Compute subnet
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  gcp:
+    projectID: fp-secure-api-gateway
+    region: asia-southeast2
+    network: ocp-one-gate-payment-network
+    controlPlaneSubnet: ocp-one-gate-payment-master-subnet
+    computeSubnet: ocp-one-gate-payment-worker-subnet
+pullSecret: |
+  {"auths":{"cloud.openshift.com":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfNDJmZGZlNjA1ZjliNDZkOWFlYTE5ZmQwNzllYzkxNjM6MUg4Ukc0TUNJRUtURExJREJVUVJaOEdRTU41MkE4QklIQ0U3QlQzOVJMUUdXTlNZRUJEMUY1Q0FWM0lQQUtMNw==","email":"fajrarisqulla@gmail.com"},"quay.io":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K29jbV9hY2Nlc3NfNDJmZGZlNjA1ZjliNDZkOWFlYTE5ZmQwNzllYzkxNjM6MUg4Ukc0TUNJRUtURExJREJVUVJaOEdRTU41MkE4QklIQ0U3QlQzOVJMUUdXTlNZRUJEMUY1Q0FWM0lQQUtMNw==","email":"fajrarisqulla@gmail.com"},"registry.connect.redhat.com":{"auth":"fHVoYy1wb29sLTFhNTM4YWQ0LTExYTYtNGY1OC1iMjZkLWFiZmYyYjYyNTU3ZTpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSXdZelprTnpSaU5XWmxPV1UwWVRrMlltRTFOamc0WWpWalpUSXhNVGt6TWlKOS5PNG9EaXZTODdoNmZfZzhNU2NpbUJpVlJzWjZwT2xGMnlMdXRrUjNiSnlhOXRDemUxaHQyaHQxRXlWZGczdHFjVzE2VkVDc0R5VXZ0Zk5obFE2eEZlTU9lWkJoRFlsNU9OWlI0TzdqSVJ6cmg3UWk1dGRWZ1FpQ1NQbXg1MnB2WXZNdmpBb3g0ZlZfc2R2R1l5MV96SU93dng0dWtQOHotOEowWHYzaFVPU21TTUdEMXR3SS1GYVNsemdZZWFleDRKNWR6b2ppUVA1dWN1NGRBZUotdHpXOGVmRDU5Wk9nbnZtQ2RmOGdJTVBwR0VNSUFiSmM5TUNuSEI1Zk1IR1paN2huVWpvNU1iRzdXa1hTaVN6TkZRWUp6dTk1VTlNdFN0MzU0cWFmQmpQdHVsVndRNTRJZUF3OWdQSTdoRDliU0RIZktQZWc0ZVFabXVPeUlzZ3RsMUV6bGVyR2RPRkM3U1d5aHdKVlM0OG9Yb0NPTmUwb25FbnM4aXU1SmVTRi14MmZzS2pFSXlMWUdkSlU4UzA1bEp2QW1ibUlsa05Ydk5sZ3RaRnFaWi1MbUlJX0pRTkkteWhQTzZnQzNxbFlwRmtXaWh2ZXRiWnJvR1ltVVZRV0libVBxSTBpY3EzcnJOMjU1SkxUSGlLRlI2cC0xbE5RU0M2OFdRY3dEbFdxbmlDYjBTemppaVA0NHkwYlNrUVM0VG5Jbkw3Q1gwWkl0d0pzaTFFNkxNMGhtYUE0M2NSTllockhqd3JPb2FaOG9MMEwtRVhtdmZmcnBaU2VwNURKU2xaR3pscEhwVTZWa3FCNFJmWnB1UlppbDhLMk1TZGQ1YlBld3ZuZUw1STM1d2QxUkYtLTlGUXpEQWhFNG5JbHpULUU1d1BicGtYNE5kWEg0UXVBQXdGSQ==","email":"fajrarisqulla@gmail.com"},"registry.redhat.io":{"auth":"fHVoYy1wb29sLTFhNTM4YWQ0LTExYTYtNGY1OC1iMjZkLWFiZmYyYjYyNTU3ZTpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSXdZelprTnpSaU5XWmxPV1UwWVRrMlltRTFOamc0WWpWalpUSXhNVGt6TWlKOS5PNG9EaXZTODdoNmZfZzhNU2NpbUJpVlJzWjZwT2xGMnlMdXRrUjNiSnlhOXRDemUxaHQyaHQxRXlWZGczdHFjVzE2VkVDc0R5VXZ0Zk5obFE2eEZlTU9lWkJoRFlsNU9OWlI0TzdqSVJ6cmg3UWk1dGRWZ1FpQ1NQbXg1MnB2WXZNdmpBb3g0ZlZfc2R2R1l5MV96SU93dng0dWtQOHotOEowWHYzaFVPU21TTUdEMXR3SS1GYVNsemdZZWFleDRKNWR6b2ppUVA1dWN1NGRBZUotdHpXOGVmRDU5Wk9nbnZtQ2RmOGdJTVBwR0VNSUFiSmM5TUNuSEI1Zk1IR1paN2huVWpvNU1iRzdXa1hTaVN6TkZRWUp6dTk1VTlNdFN0MzU0cWFmQmpQdHVsVndRNTRJZUF3OWdQSTdoRDliU0RIZktQZWc0ZVFabXVPeUlzZ3RsMUV6bGVyR2RPRkM3U1d5aHdKVlM0OG9Yb0NPTmUwb25FbnM4aXU1SmVTRi14MmZzS2pFSXlMWUdkSlU4UzA1bEp2QW1ibUlsa05Ydk5sZ3RaRnFaWi1MbUlJX0pRTkkteWhQTzZnQzNxbFlwRmtXaWh2ZXRiWnJvR1ltVVZRV0libVBxSTBpY3EzcnJOMjU1SkxUSGlLRlI2cC0xbE5RU0M2OFdRY3dEbFdxbmlDYjBTemppaVA0NHkwYlNrUVM0VG5Jbkw3Q1gwWkl0d0pzaTFFNkxNMGhtYUE0M2NSTllockhqd3JPb2FaOG9MMEwtRVhtdmZmcnBaU2VwNURKU2xaR3pscEhwVTZWa3FCNFJmWnB1UlppbDhLMk1TZGQ1YlBld3ZuZUw1STM1d2QxUkYtLTlGUXpEQWhFNG5JbHpULUU1d1BicGtYNE5kWEg0UXVBQXdGSQ==","email":"fajrarisqulla@gmail.com"}}}
+sshKey: |
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCdiFTptrRJvr+Lgs2isZElb5I/rWVFOT+Z3T5fVoRwSyHos20XHhC74SyaQAqv6rgQ1p1hYIvgvWXqyYU+sJg5Wmq4h4Xgc0SSyR1O2PtktgtIlt3nRhflYG3vyj8FjTWheDLTkvBDQG8MGG+XlIbk6GB7MfXrNFQ2dfOF/iyn8SWGremjt+gSViZS0zsCXtfr3Y6i7gIYtFgYbCjV4AabzTzwqvDbqI8UrYmi8oEJmCYYnLHTPoKiziX3h2r0qgQY67S5qEs/NkgX8cNTQGjkntpT1PrIUBFz6darafgJvSwcHrA3Rm+P70jmi+ca/tBgXL4vniUh7NH9wdDrZY1+RCNZZ99xtEfkV4HYcldixZzFoCecthCH7xyIu4Nbs+NpSS32aAm24EON9Z4JDhOpAtzrEtARQODI7flKxMP6odGFZqy70I63WC/hULGFMpX9MkGz5f0bRpPLVzvoVFzPGcrghZrvg943/sHGhMTcySFxXld7mJkDP147AIkq8Rk= cisnux@cisnuxs-MacBook-Air.local
