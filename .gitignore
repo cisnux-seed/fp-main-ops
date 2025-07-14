@@ -1,1 +1,10 @@
-/terraform/compute-engine/.terraform
+terraform/openshift/.credentials
+terraform/openshift/.terraform
+terraform/openshift/.terraform.lock.hcl
+terraform/openshift/terraform.tfstate.backup
+terraform/openshift/terraform.tfstate
+terraform/openshift/pre-installs/.terraform
+terraform/openshift/pre-installs/.terraform.lock.hcl
+terraform/openshift/pre-installs/terraform.tfstate.backup
+terraform/openshift/pre-installs/terraform.tfstate
+terraform/openshift/install/cluster/*
