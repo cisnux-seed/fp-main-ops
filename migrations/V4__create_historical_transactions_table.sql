@@ -1,6 +1,6 @@
 CREATE TYPE transaction_type_enum AS ENUM ('TOPUP', 'PAYMENT', 'REFUND', 'TRANSFER');
 CREATE TYPE transaction_status_enum AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED');
-CREATE TYPE payment_method_enum AS ENUM ('GOPAY', 'SHOPEE_PAY', 'BANK_TRANSFER');
+CREATE TYPE payment_method_enum AS ENUM ('GOPAY', 'SHOPEE_PAY');
 
 CREATE TABLE historical_transactions
 (

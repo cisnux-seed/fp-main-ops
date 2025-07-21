@@ -1,19 +1,19 @@
 -- Insert dummy users
 INSERT INTO users (id, username, email, phone, password, created_at, updated_at)
 VALUES (1, 'john_doe', 'john.doe@example.com', '+6281234567890',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '2024-01-15 10:30:00', '2024-01-15 10:30:00'),
+        '$argon2id$v=19$m=16384,t=2,p=1$PoQbisWKt769EMs6KE+D6Q$dlJIy5ThpYEQMXfeSheNvwy6hfL6cXXdoOJhPmJFAYo', '2024-01-15 10:30:00', '2024-01-15 10:30:00'),
        (2, 'jane_smith', 'jane.smith@example.com', '+6281234567891',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '2024-01-16 14:20:00', '2024-01-16 14:20:00'),
+        '$argon2id$v=19$m=16384,t=2,p=1$PoQbisWKt769EMs6KE+D6Q$dlJIy5ThpYEQMXfeSheNvwy6hfL6cXXdoOJhPmJFAYo', '2024-01-16 14:20:00', '2024-01-16 14:20:00'),
        (3, 'ahmad_budi', 'ahmad.budi@gmail.com', '+6281234567892',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '2024-01-17 09:15:00', '2024-01-17 09:15:00'),
+        '$argon2id$v=19$m=16384,t=2,p=1$PoQbisWKt769EMs6KE+D6Q$dlJIy5ThpYEQMXfeSheNvwy6hfL6cXXdoOJhPmJFAYo', '2024-01-17 09:15:00', '2024-01-17 09:15:00'),
        (4, 'siti_nurhaliza', 'siti.nurhaliza@yahoo.com', '+6281234567893',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '2024-01-18 16:45:00', '2024-01-18 16:45:00'),
+        '$argon2id$v=19$m=16384,t=2,p=1$PoQbisWKt769EMs6KE+D6Q$dlJIy5ThpYEQMXfeSheNvwy6hfL6cXXdoOJhPmJFAYo', '2024-01-18 16:45:00', '2024-01-18 16:45:00'),
        (5, 'david_tan', 'david.tan@company.co.id', '+6281234567894',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '2024-01-19 11:30:00', '2024-01-19 11:30:00'),
+        '$argon2id$v=19$m=16384,t=2,p=1$PoQbisWKt769EMs6KE+D6Q$dlJIy5ThpYEQMXfeSheNvwy6hfL6cXXdoOJhPmJFAYo', '2024-01-19 11:30:00', '2024-01-19 11:30:00'),
        (6, 'rina_kusuma', 'rina.kusuma@outlook.com', '+6281234567895',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '2024-01-20 08:15:00', '2024-01-20 08:15:00'),
+        '$argon2id$v=19$m=16384,t=2,p=1$PoQbisWKt769EMs6KE+D6Q$dlJIy5ThpYEQMXfeSheNvwy6hfL6cXXdoOJhPmJFAYo', '2024-01-20 08:15:00', '2024-01-20 08:15:00'),
        (7, 'bayu_setiawan', 'bayu.setiawan@gmail.com', '+6285987654321',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '2024-01-20 10:45:00', '2024-01-20 10:45:00');
+        '$argon2id$v=19$m=16384,t=2,p=1$PoQbisWKt769EMs6KE+D6Q$dlJIy5ThpYEQMXfeSheNvwy6hfL6cXXdoOJhPmJFAYo', '2024-01-20 10:45:00', '2024-01-20 10:45:00');
 
 -- Insert dummy authentications (refresh tokens)
 INSERT INTO authentications (token, user_id, created_at)
@@ -51,7 +51,7 @@ VALUES
  'SUCCESS', 25000.00, 100000.00, 75000.00, 'IDR', 'Payment for online shopping', 'MERCHANT-REF-789012', 'GOPAY',
  '{"merchant": "Tokopedia", "order_id": "TKP-001"}', true, '2024-01-16 13:30:00', '2024-01-16 13:31:00'),
 ('650e8400-e29b-41d4-a716-446655440003', 1, '550e8400-e29b-41d4-a716-446655440001', 'TXN-20240118-001', 'TOPUP',
- 'SUCCESS', 200000.00, 75000.00, 275000.00, 'IDR', 'Top up via Bank Transfer', 'BNI-TRF-345678', 'BANK_TRANSFER',
+ 'SUCCESS', 200000.00, 75000.00, 275000.00, 'IDR', 'Top up via Bank Transfer', 'BNI-TRF-345678', 'SHOPEE_PAY',
  '{"bank": "BNI", "account": "1234567890", "ref": "BNI345678"}', true, '2024-01-18 09:15:00', '2024-01-18 09:20:00'),
 ('650e8400-e29b-41d4-a716-446655440004', 1, '550e8400-e29b-41d4-a716-446655440001', 'TXN-20240119-001', 'PAYMENT',
  'SUCCESS', 25000.00, 275000.00, 250000.00, 'IDR', 'Food delivery payment', 'GOFOOD-REF-456789', 'GOPAY',
@@ -70,7 +70,7 @@ VALUES
 
 -- Ahmad Budi transactions
 ('650e8400-e29b-41d4-a716-446655440008', 3, '550e8400-e29b-41d4-a716-446655440003', 'TXN-20240117-002', 'TOPUP',
- 'SUCCESS', 100000.00, 0.00, 100000.00, 'IDR', 'Initial balance setup', 'BCA-TRF-777888', 'BANK_TRANSFER',
+ 'SUCCESS', 100000.00, 0.00, 100000.00, 'IDR', 'Initial balance setup', 'BCA-TRF-777888', 'SHOPEE_PAY',
  '{"bank": "BCA", "account": "9876543210", "ref": "BCA777888"}', true, '2024-01-17 10:00:00', '2024-01-17 10:05:00'),
 ('650e8400-e29b-41d4-a716-446655440009', 3, '550e8400-e29b-41d4-a716-446655440003', 'TXN-20240118-002', 'PAYMENT',
  'SUCCESS', 25000.00, 100000.00, 75000.00, 'IDR', 'Movie ticket purchase', 'CGV-REF-999000', 'GOPAY',
@@ -78,12 +78,12 @@ VALUES
 
 -- Siti Nurhaliza transactions (suspended account)
 ('650e8400-e29b-41d4-a716-446655440010', 4, '550e8400-e29b-41d4-a716-446655440004', 'TXN-20240118-003', 'TOPUP',
- 'FAILED', 50000.00, 0.00, 0.00, 'IDR', 'Failed top up - insufficient funds', 'MANDIRI-REF-FAIL', 'BANK_TRANSFER',
+ 'FAILED', 50000.00, 0.00, 0.00, 'IDR', 'Failed top up - insufficient funds', 'MANDIRI-REF-FAIL', 'SHOPEE_PAY',
  '{"bank": "Mandiri", "error": "insufficient_funds"}', false, '2024-01-18 17:00:00', '2024-01-18 17:05:00'),
 
 -- David Tan transactions
 ('650e8400-e29b-41d4-a716-446655440011', 5, '550e8400-e29b-41d4-a716-446655440005', 'TXN-20240119-003', 'TOPUP',
- 'SUCCESS', 500000.00, 0.00, 500000.00, 'IDR', 'Large business top up', 'BNI-CORP-123456', 'BANK_TRANSFER',
+ 'SUCCESS', 500000.00, 0.00, 500000.00, 'IDR', 'Large business top up', 'BNI-CORP-123456', 'SHOPEE_PAY',
  '{"bank": "BNI", "account": "1111222233", "type": "corporate", "ref": "BNICORP123456"}', true, '2024-01-19 11:45:00',
  '2024-01-19 11:50:00'),
 ('650e8400-e29b-41d4-a716-446655440012', 5, '550e8400-e29b-41d4-a716-446655440005', 'TXN-20240120-001', 'TRANSFER',
