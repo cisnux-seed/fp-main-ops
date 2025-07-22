@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: postgresql
-          image: postgres:17-alpine  # Use specific version for production
+          image: postgres:17-alpine
           imagePullPolicy: IfNotPresent
 
           # Environment variables from secret
@@ -102,85 +102,11 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 30
 
-        # Flyway sidecar container for database migrations
-        - name: flyway
-          image: flyway/flyway:10-alpine
-
-          # Flyway command arguments
-          args:
-            - -url=jdbc:postgresql://localhost:5432/one_gate_payment
-            - -user=developer
-            - -password=developer123
-            - -locations=filesystem:/flyway/sql
-            - -validateMigrationNaming=true
-            - -baselineOnMigrate=true
-            - -connectRetries=60
-            - -connectRetriesInterval=1
-            - migrate
-
-          # Environment variables
-          env:
-            - name: FLYWAY_URL
-              value: "jdbc:postgresql://localhost:5432/one_gate_payment"
-            - name: FLYWAY_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgresql-secret
-                  key: POSTGRES_USER
-            - name: FLYWAY_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgresql-secret
-                  key: POSTGRES_PASSWORD
-            - name: FLYWAY_LOCATIONS
-              value: "filesystem:/flyway/sql"
-            - name: FLYWAY_BASELINE_ON_MIGRATE
-              value: "true"
-            - name: FLYWAY_VALIDATE_MIGRATION_NAMING
-              value: "true"
-            - name: FLYWAY_CONNECT_RETRIES
-              value: "60"
-            - name: FLYWAY_CONNECT_RETRIES_INTERVAL
-              value: "1"
-
-          # Resource limits for flyway sidecar
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
-              memory: "256Mi"
-              cpu: "200m"
-
-          # Volume mounts for flyway migrations
-          volumeMounts:
-            - name: flyway-migrations-volume
-              mountPath: /flyway/sql
-              readOnly: true
-
-          # Lifecycle hook to ensure flyway runs after postgres is ready
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    echo "Waiting for PostgreSQL to be ready before starting Flyway..."
-                    until nc -z localhost 5432; do
-                      echo "PostgreSQL not ready yet, waiting..."
-                      sleep 2
-                    done
-                    echo "PostgreSQL is ready, Flyway will start migrations..."
-
       # Volumes
       volumes:
         - name: postgresql-config-volume
           configMap:
             name: postgresql-config
-        - name: flyway-migrations-volume
-          configMap:
-            name: flyway-migrations
 
   # Volume claim template for persistent storage
   volumeClaimTemplates:
@@ -194,8 +120,6 @@ spec:
         resources:
           requests:
             storage: 20Gi
-        # Use default storage class or specify one suitable for your cluster
-        # storageClassName: fast-ssd
 
 ---
 # Service for one gate payment database
@@ -215,3 +139,109 @@ spec:
       name: postgresql
   selector:
     app: one-gate-payment-db
+---
+# Flyway Migration Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flyway-migration-job
+  namespace: one-gate-payment
+  labels:
+    app: one-gate-payment-db
+    component: migration
+spec:
+  # Job will be retried up to 3 times if it fails
+  backoffLimit: 3
+  
+  # Job will be cleaned up after 24 hours of completion
+  ttlSecondsAfterFinished: 86400
+  
+  template:
+    metadata:
+      labels:
+        app: one-gate-payment-db
+        component: migration
+    spec:
+      restartPolicy: Never
+      
+      # Init container to wait for PostgreSQL to be ready
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:17-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until pg_isready -h postgresql-service.one-gate-payment.svc.cluster.local -p 5432 -U $POSTGRES_USER -d $POSTGRES_DB; do
+                echo "PostgreSQL not ready yet, waiting 5 seconds..."
+                sleep 5
+              done
+              echo "PostgreSQL is ready!"
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_DB
+
+      containers:
+        - name: flyway-migration
+          image: flyway/flyway:10-alpine
+          
+          # Flyway command arguments
+          args:
+            - -url=jdbc:postgresql://postgresql-service.one-gate-payment.svc.cluster.local:5432/one_gate_payment
+            - -locations=filesystem:/flyway/sql
+            - -validateMigrationNaming=true
+            - -baselineOnMigrate=true
+            - -connectRetries=10
+            - -connectRetriesInterval=5
+            - migrate
+
+          # Environment variables
+          env:
+            - name: FLYWAY_URL
+              value: "jdbc:postgresql://postgresql-service.one-gate-payment.svc.cluster.local:5432/one_gate_payment"
+            - name: FLYWAY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_USER
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_PASSWORD
+            - name: FLYWAY_LOCATIONS
+              value: "filesystem:/flyway/sql"
+            - name: FLYWAY_BASELINE_ON_MIGRATE
+              value: "true"
+            - name: FLYWAY_VALIDATE_MIGRATION_NAMING
+              value: "true"
+
+          # Resource limits for flyway job
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          # Volume mounts for flyway migrations
+          volumeMounts:
+            - name: flyway-migrations-volume
+              mountPath: /flyway/sql
+              readOnly: true
+
+      # Volumes
+      volumes:
+        - name: flyway-migrations-volume
+          configMap:
+            name: flyway-migrations
