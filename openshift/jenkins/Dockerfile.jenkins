@@ -9,10 +9,16 @@ RUN apt-get update && \
     python3 python3-pip python3-venv sshpass && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Docker
-RUN curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-28.2.2.tgz" | \
-    tar -xzC /usr/local/bin --strip=1 docker/docker && \
-    chmod +x /usr/local/bin/docker
+# Install Podman
+RUN echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list && \
+    curl -fsSL https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/xUbuntu_22.04/Release.key | gpg --dearmor > /etc/apt/trusted.gpg.d/devel_kubic_libcontainers_stable.gpg && \
+    apt-get update && \
+    apt-get install -y podman buildah skopeo && \
+    rm -rf /var/lib/apt/lists/*
+
+# Configure Podman for rootless operation
+RUN echo "jenkins:100000:65536" >> /etc/subuid && \
+    echo "jenkins:100000:65536" >> /etc/subgid
 
 # Install Terraform
 ARG TERRAFORM_VERSION=1.12.2
@@ -46,18 +52,33 @@ RUN usermod -aG root jenkins
 # Switch back to jenkins user
 USER jenkins
 
-# Docker buildx setup
-ENV DOCKER_BUILDKIT=1
-ENV BUILDKIT_PROGRESS=plain
-ENV DOCKER_CLI_EXPERIMENTAL=enabled
+# Configure Podman for Jenkins user
+RUN mkdir -p $HOME/.config/containers && \
+    echo '[containers]' > $HOME/.config/containers/containers.conf && \
+    echo 'userns="host"' >> $HOME/.config/containers/containers.conf && \
+    echo 'ipcns="host"' >> $HOME/.config/containers/containers.conf && \
+    echo 'utsns="host"' >> $HOME/.config/containers/containers.conf && \
+    echo 'cgroupns="host"' >> $HOME/.config/containers/containers.conf && \
+    echo 'cgroups="disabled"' >> $HOME/.config/containers/containers.conf && \
+    echo 'log_driver = "k8s-file"' >> $HOME/.config/containers/containers.conf
 
-ARG BUILDX_URL=https://github.com/docker/buildx/releases/download/v0.25.0/buildx-v0.25.0.linux-amd64
+# Enable QEMU for multi-platform builds
+USER root
+RUN apt-get update && \
+    apt-get install -y qemu-user-static binfmt-support && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p $HOME/.docker/cli-plugins && \
-    curl -fsSL ${BUILDX_URL} -o $HOME/.docker/cli-plugins/docker-buildx && \
-    chmod a+x $HOME/.docker/cli-plugins/docker-buildx
+USER jenkins
 
-# Install Jenkins plugins
+# Create podman alias for docker compatibility and set up buildah for multi-platform
+RUN echo 'alias docker=podman' >> $HOME/.bashrc && \
+    echo 'alias docker-buildx="buildah bud"' >> $HOME/.bashrc
+
+# Configure multi-platform support
+RUN mkdir -p $HOME/.config/containers/registries.d && \
+    echo 'unqualified-search-registries = ["docker.io"]' > $HOME/.config/containers/registries.conf
+
+# Install Jenkins plugins (updated for Podman compatibility)
 RUN jenkins-plugin-cli --plugins \
     workflow-aggregator \
     pipeline-stage-view \
