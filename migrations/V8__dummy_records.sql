@@ -26,15 +26,15 @@ VALUES ('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2huX2RvZSIsImlhdCI6MT
 
 -- Insert dummy accounts
 INSERT INTO accounts (id, user_id, balance, currency, account_status, created_at, updated_at)
-VALUES ('550e8400-e29b-41d4-a716-446655440001', 1, 250000.00, 'IDR', 'ACTIVE', '2024-01-15 10:30:00',
+VALUES ('2112443327', 1, 250000000.00, 'IDR', 'ACTIVE', '2024-01-15 10:30:00',
         '2024-01-20 15:45:00'),
-       ('550e8400-e29b-41d4-a716-446655440002', 2, 180000.00, 'IDR', 'ACTIVE', '2024-01-16 14:20:00',
+       ('1211332156', 2, 180000000.00, 'IDR', 'ACTIVE', '2024-01-16 14:20:00',
         '2024-01-20 16:30:00'),
-       ('550e8400-e29b-41d4-a716-446655440003', 3, 75000.00, 'IDR', 'ACTIVE', '2024-01-17 09:15:00',
+       ('1718211129', 3, 750000000.00, 'IDR', 'ACTIVE', '2024-01-17 09:15:00',
         '2024-01-20 12:20:00'),
-       ('550e8400-e29b-41d4-a716-446655440004', 4, 0.00, 'IDR', 'SUSPENDED', '2024-01-18 16:45:00',
+       ('7667819120', 4, 0.00, 'IDR', 'SUSPENDED', '2024-01-18 16:45:00',
         '2024-01-19 10:00:00'),
-       ('550e8400-e29b-41d4-a716-446655440005', 5, 500000.00, 'IDR', 'ACTIVE', '2024-01-19 11:30:00',
+       ('5665811721', 5, 500000000.00, 'IDR', 'ACTIVE', '2024-01-19 11:30:00',
         '2024-01-20 17:15:00');
 
 -- Insert dummy historical transactions
@@ -43,50 +43,50 @@ INSERT INTO historical_transactions (id, user_id, account_id, transaction_id, tr
                                      payment_method, metadata, is_accessible_external, created_at, updated_at)
 VALUES
 -- John Doe transactions
-('650e8400-e29b-41d4-a716-446655440001', 1, '550e8400-e29b-41d4-a716-446655440001', 'TXN-20240115-001', 'TOPUP',
+('650e8400-e29b-41d4-a716-446655440001', 1, '2112443327', 'TXN-20240115-001', 'TOPUP',
  'SUCCESS', 100000.00, 0.00, 100000.00, 'IDR', 'Initial top up via GoPay', 'GOPAY-REF-123456', 'GOPAY',
  '{"provider": "gopay", "reference": "GP123456", "phone": "081234567890"}', true, '2024-01-15 11:00:00',
  '2024-01-15 11:01:00'),
-('650e8400-e29b-41d4-a716-446655440002', 1, '550e8400-e29b-41d4-a716-446655440001', 'TXN-20240116-001', 'PAYMENT',
+('650e8400-e29b-41d4-a716-446655440002', 1, '2112443327', 'TXN-20240116-001', 'PAYMENT',
  'SUCCESS', 25000.00, 100000.00, 75000.00, 'IDR', 'Payment for online shopping', 'MERCHANT-REF-789012', 'GOPAY',
  '{"merchant": "Tokopedia", "order_id": "TKP-001"}', true, '2024-01-16 13:30:00', '2024-01-16 13:31:00'),
-('650e8400-e29b-41d4-a716-446655440003', 1, '550e8400-e29b-41d4-a716-446655440001', 'TXN-20240118-001', 'TOPUP',
+('650e8400-e29b-41d4-a716-446655440003', 1, '2112443327', 'TXN-20240118-001', 'TOPUP',
  'SUCCESS', 200000.00, 75000.00, 275000.00, 'IDR', 'Top up via Bank Transfer', 'BNI-TRF-345678', 'SHOPEE_PAY',
  '{"bank": "BNI", "account": "1234567890", "ref": "BNI345678"}', true, '2024-01-18 09:15:00', '2024-01-18 09:20:00'),
-('650e8400-e29b-41d4-a716-446655440004', 1, '550e8400-e29b-41d4-a716-446655440001', 'TXN-20240119-001', 'PAYMENT',
+('650e8400-e29b-41d4-a716-446655440004', 1, '2112443327', 'TXN-20240119-001', 'PAYMENT',
  'SUCCESS', 25000.00, 275000.00, 250000.00, 'IDR', 'Food delivery payment', 'GOFOOD-REF-456789', 'GOPAY',
  '{"merchant": "GoFood", "restaurant": "KFC"}', true, '2024-01-19 19:45:00', '2024-01-19 19:46:00'),
 
 -- Jane Smith transactions
-('650e8400-e29b-41d4-a716-446655440005', 2, '550e8400-e29b-41d4-a716-446655440002', 'TXN-20240116-002', 'TOPUP',
+('650e8400-e29b-41d4-a716-446655440005', 2, '1211332156', 'TXN-20240116-002', 'TOPUP',
  'SUCCESS', 150000.00, 0.00, 150000.00, 'IDR', 'First top up via ShopeePay', 'SHOPEE-REF-111222', 'SHOPEE_PAY',
  '{"provider": "shopeepay", "reference": "SP111222"}', true, '2024-01-16 15:00:00', '2024-01-16 15:02:00'),
-('650e8400-e29b-41d4-a716-446655440006', 2, '550e8400-e29b-41d4-a716-446655440002', 'TXN-20240117-001', 'PAYMENT',
+('650e8400-e29b-41d4-a716-446655440006', 2, '1211332156', 'TXN-20240117-001', 'PAYMENT',
  'SUCCESS', 45000.00, 150000.00, 105000.00, 'IDR', 'Grab ride payment', 'GRAB-REF-333444', 'SHOPEE_PAY',
  '{"merchant": "Grab", "trip_id": "GRAB123"}', true, '2024-01-17 08:30:00', '2024-01-17 08:31:00'),
-('650e8400-e29b-41d4-a716-446655440007', 2, '550e8400-e29b-41d4-a716-446655440002', 'TXN-20240119-002', 'TOPUP',
+('650e8400-e29b-41d4-a716-446655440007', 2, '1211332156', 'TXN-20240119-002', 'TOPUP',
  'SUCCESS', 75000.00, 105000.00, 180000.00, 'IDR', 'Top up for weekend spending', 'SHOPEE-REF-555666', 'SHOPEE_PAY',
  '{"provider": "shopeepay", "reference": "SP555666"}', true, '2024-01-19 12:00:00', '2024-01-19 12:01:00'),
 
 -- Ahmad Budi transactions
-('650e8400-e29b-41d4-a716-446655440008', 3, '550e8400-e29b-41d4-a716-446655440003', 'TXN-20240117-002', 'TOPUP',
+('650e8400-e29b-41d4-a716-446655440008', 3, '1718211129', 'TXN-20240117-002', 'TOPUP',
  'SUCCESS', 100000.00, 0.00, 100000.00, 'IDR', 'Initial balance setup', 'BCA-TRF-777888', 'SHOPEE_PAY',
  '{"bank": "BCA", "account": "9876543210", "ref": "BCA777888"}', true, '2024-01-17 10:00:00', '2024-01-17 10:05:00'),
-('650e8400-e29b-41d4-a716-446655440009', 3, '550e8400-e29b-41d4-a716-446655440003', 'TXN-20240118-002', 'PAYMENT',
+('650e8400-e29b-41d4-a716-446655440009', 3, '1718211129', 'TXN-20240118-002', 'PAYMENT',
  'SUCCESS', 25000.00, 100000.00, 75000.00, 'IDR', 'Movie ticket purchase', 'CGV-REF-999000', 'GOPAY',
  '{"merchant": "CGV", "movie": "Avengers", "tickets": 2}', true, '2024-01-18 20:15:00', '2024-01-18 20:16:00'),
 
 -- Siti Nurhaliza transactions (suspended account)
-('650e8400-e29b-41d4-a716-446655440010', 4, '550e8400-e29b-41d4-a716-446655440004', 'TXN-20240118-003', 'TOPUP',
+('650e8400-e29b-41d4-a716-446655440010', 4, '7667819120', 'TXN-20240118-003', 'TOPUP',
  'FAILED', 50000.00, 0.00, 0.00, 'IDR', 'Failed top up - insufficient funds', 'MANDIRI-REF-FAIL', 'SHOPEE_PAY',
  '{"bank": "Mandiri", "error": "insufficient_funds"}', false, '2024-01-18 17:00:00', '2024-01-18 17:05:00'),
 
 -- David Tan transactions
-('650e8400-e29b-41d4-a716-446655440011', 5, '550e8400-e29b-41d4-a716-446655440005', 'TXN-20240119-003', 'TOPUP',
+('650e8400-e29b-41d4-a716-446655440011', 5, '5665811721', 'TXN-20240119-003', 'TOPUP',
  'SUCCESS', 500000.00, 0.00, 500000.00, 'IDR', 'Large business top up', 'BNI-CORP-123456', 'SHOPEE_PAY',
  '{"bank": "BNI", "account": "1111222233", "type": "corporate", "ref": "BNICORP123456"}', true, '2024-01-19 11:45:00',
  '2024-01-19 11:50:00'),
-('650e8400-e29b-41d4-a716-446655440012', 5, '550e8400-e29b-41d4-a716-446655440005', 'TXN-20240120-001', 'TRANSFER',
+('650e8400-e29b-41d4-a716-446655440012', 5, '5665811721', 'TXN-20240120-001', 'TRANSFER',
  'PENDING', 50000.00, 500000.00, 450000.00, 'IDR', 'Transfer to employee bonus', 'TRANSFER-REF-001', null,
  '{"transfer_type": "internal", "recipient": "employee_bonus_pool"}', true, '2024-01-20 14:30:00',
  '2024-01-20 14:30:00');
