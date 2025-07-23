@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: loki
+  namespace: observability-one-gate-payment
+spec:
+  host: loki.apps.ocp-one-gate-payment.skynux.fun
+  to:
+    kind: Service
+    name: loki
+    weight: 100
+  port:
+    targetPort: http  # or the port name/number your service uses
+  tls:
+    termination: edge
