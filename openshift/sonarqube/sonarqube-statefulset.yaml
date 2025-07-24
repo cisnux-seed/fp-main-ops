@@ -72,6 +72,11 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 24
+          resources:
+            requests:
+              memory: "4Gi"
+            limits:
+              memory: "5Gi"
       volumes:
         - name: sonarqube-config
           configMap:
