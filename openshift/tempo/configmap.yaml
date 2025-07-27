@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: observability-one-gate-payment
+data:
+  tempo.yml: |
+    server:
+      http_listen_port: 3200
+      grpc_listen_port: 9095
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            http:
+              endpoint: 0.0.0.0:4318
+            grpc:
+              endpoint: 0.0.0.0:4317
+    ingester:
+      max_block_duration: 5m
+    compactor:
+      compaction:
+        block_retention: 1h
+    querier:
+      frontend_worker:
+        frontend_address: 127.0.0.1:9095
+    query_frontend:
+      search:
+        duration_slo: 5s
+        throughput_bytes_slo: 1.073741824e+09
+      trace_by_id:
+        duration_slo: 5s
+      metrics:
+        concurrent_jobs: 8
+        target_bytes_per_job: 125000000
+    metrics_generator:
+      registry:
+        external_labels:
+          source: tempo
+          cluster: openshift
+      storage:
+        path: /data/tempo/generator/wal
+        remote_write:
+          - url: http://172.30.237.148:9090/api/v1/write
+            send_exemplars: true
+      traces_storage:
+        path: /data/tempo/generator/traces
+      processor:
+        service_graphs:
+          dimensions: []
+        span_metrics:
+          dimensions: []
+        local_blocks:
+          flush_to_storage: true
+          filter_server_spans: false
+    storage:
+      trace:
+        backend: local
+        wal:
+          path: /data/tempo/wal
+        local:
+          path: /data/tempo/blocks
+        pool:
+          max_workers: 100
+          queue_depth: 10000
+    overrides:
+      defaults:
+        metrics_generator:
+          processors: [service-graphs, span-metrics, local-blocks]

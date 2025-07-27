@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: observability-one-gate-payment
+data:
+  otel-collector.yml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch:
+        send_batch_max_size: 1000
+        send_batch_size: 100
+        timeout: 10s
+    exporters:
+      prometheusremotewrite:
+        endpoint: "http://172.30.237.148:9090/api/v1/write"
+        timeout: 30s
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+        enable_open_metrics: true
+      loki:
+        endpoint: "http://172.30.198.186:3100/loki/api/v1/push"
+      otlp/tempo:
+        endpoint: "172.30.45.52:4317"
+        tls:
+          insecure: true
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+    service:
+      pipelines:
+        metrics:
+          receivers: [ otlp ]
+          processors: [ batch ]
+          exporters: [ prometheusremotewrite, prometheus ]
+        logs:
+          receivers: [ otlp ]
+          processors: [ batch ]
+          exporters: [ loki ]
+        traces:
+          receivers: [ otlp ]
+          processors: [ batch ]
+          exporters: [ otlp/tempo ]

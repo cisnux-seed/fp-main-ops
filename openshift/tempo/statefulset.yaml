@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tempo
+  namespace: observability-one-gate-payment
+  labels:
+    app: tempo
+spec:
+  serviceName: tempo-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tempo
+  template:
+    metadata:
+      labels:
+        app: tempo
+    spec:
+      containers:
+        - name: tempo
+          image: grafana/tempo:latest
+          args:
+            - "-config.file=/etc/tempo.yml"
+          ports:
+            - containerPort: 3200
+              name: http
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/
+            - name: data-volume
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 3200
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3200
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: config-volume
+          configMap:
+            name: tempo-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+# Headless Service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo-headless
+  namespace: observability-one-gate-payment
+  labels:
+    app: tempo
+spec:
+  clusterIP: None
+  selector:
+    app: tempo
+  ports:
+    - name: http
+      port: 3200
+      targetPort: 3200
+
+---
+# Regular Service for Tempo
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo
+  namespace: observability-one-gate-payment
+  labels:
+    app: tempo
+spec:
+  selector:
+    app: tempo
+  ports:
+    - name: http
+      port: 3200
+      targetPort: 3200
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+
+---
+# Route for external access to Tempo UI
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: tempo
+  namespace: observability-one-gate-payment
+  labels:
+    app: tempo
+spec:
+  to:
+    kind: Service
+    name: tempo
+  port:
+    targetPort: http
