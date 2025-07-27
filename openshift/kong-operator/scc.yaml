@@ -1,0 +1,10 @@
+# Create service account for Kong
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kong-serviceaccount
+  namespace: one-gate-payment
+
+---
+# Bind the service account to anyuid SCC
+# Run this command manually: oc adm policy add-scc-to-user anyuid system:serviceaccount:one-gate-payment:kong-serviceaccount

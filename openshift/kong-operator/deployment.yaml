@@ -1,0 +1,189 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kong-gateway
+  namespace: one-gate-payment
+  labels:
+    app: kong-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kong-gateway
+  template:
+    metadata:
+      labels:
+        app: kong-gateway
+    spec:
+      serviceAccountName: kong-serviceaccount
+      # Security context for OpenShift
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+        - name: kong
+          image: kong/kong-gateway:3.11
+          # Security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1001
+          env:
+            # Database-less mode
+            - name: KONG_DATABASE
+              value: "off"
+            - name: KONG_DECLARATIVE_CONFIG
+              value: "/kong/declarative/kong.yaml"
+            # Network settings
+            - name: KONG_PROXY_LISTEN
+              value: "0.0.0.0:8000, 0.0.0.0:8443 ssl http2"
+            - name: KONG_ADMIN_LISTEN
+              value: "0.0.0.0:8001"
+            - name: KONG_STATUS_LISTEN
+              value: "0.0.0.0:8100"
+            # Kong Manager GUI Configuration
+            - name: KONG_ADMIN_GUI_LISTEN
+              value: "0.0.0.0:8002"
+            - name: KONG_ADMIN_GUI_URL
+              value: "https://kong-manager-one-gate-payment.apps.ocp-one-gate-payment.skynux.fun"
+            - name: KONG_ADMIN_GUI_API_URL
+              value: "https://kong-admin-one-gate-payment.apps.ocp-one-gate-payment.skynux.fun"
+            # Performance settings
+            - name: KONG_NGINX_WORKER_PROCESSES
+              value: "2"
+            - name: KONG_NGINX_WORKER_CONNECTIONS
+              value: "1024"
+            # Logging
+            - name: KONG_LOG_LEVEL
+              value: "info"
+            - name: KONG_PROXY_ACCESS_LOG
+              value: "/dev/stdout"
+            - name: KONG_ADMIN_ACCESS_LOG
+              value: "/dev/stdout"
+            # Kong prefix (use writable directory)
+            - name: KONG_PREFIX
+              value: "/tmp/kong_prefix"
+            # Additional OpenShift compatibility
+            - name: KONG_NGINX_USER
+              value: "kong kong"
+            - name: KONG_NGINX_DAEMON
+              value: "off"
+          ports:
+            - containerPort: 8000
+              name: proxy
+            - containerPort: 8443
+              name: proxy-ssl
+            - containerPort: 8002
+              name: admin-gui
+            - containerPort: 8001
+              name: admin
+            - containerPort: 8100
+              name: status
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 8100
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /status/ready
+              port: 8100
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Mount configuration
+          volumeMounts:
+            - name: kong-config
+              mountPath: /kong/declarative
+              readOnly: true
+            # Mount temp directory for Kong prefix
+            - name: kong-tmp
+              mountPath: /tmp
+      volumes:
+        - name: kong-config
+          configMap:
+            name: kong-declarative-config
+        # Temporary volume for Kong working directory
+        - name: kong-tmp
+          emptyDir: {}
+
+---
+# Kong Services
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-proxy
+  namespace: one-gate-payment
+  labels:
+    app: kong-gateway
+spec:
+  type: ClusterIP
+  selector:
+    app: kong-gateway
+  ports:
+    - name: proxy
+      port: 8000
+      targetPort: 8000
+    - name: proxy-ssl
+      port: 8443
+      targetPort: 8443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-admin
+  namespace: one-gate-payment
+  labels:
+    app: kong-gateway
+spec:
+  type: ClusterIP
+  selector:
+    app: kong-gateway
+  ports:
+    - name: admin
+      port: 8001
+      targetPort: 8001
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-status
+  namespace: one-gate-payment
+  labels:
+    app: kong-gateway
+spec:
+  type: ClusterIP
+  selector:
+    app: kong-gateway
+  ports:
+    - name: status
+      port: 8100
+      targetPort: 8100
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-manager
+  namespace: one-gate-payment
+  labels:
+    app: kong-gateway
+spec:
+  type: ClusterIP
+  selector:
+    app: kong-gateway
+  ports:
+    - name: admin-gui
+      port: 8002
+      targetPort: 8002
