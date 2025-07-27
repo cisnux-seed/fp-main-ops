@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-config-script
+  namespace: one-gate-payment
+  labels:
+    app: one-gate-payment
+    component: configuration
+data:
+  configure-kong.sh: |
+    #!/bin/bash
+    set -e
+    
+    # Get JWT credentials from secrets
+    JWT_KEY=aHR0cHM6Ly9ibmkuY28uaWQ=
+    JWT_SECRET=ZTI5MjY5MDlhNWM0M2VjZWEzZmZhM2I2NWZjNzQ3MDg5NzU1ZDY4N2Y0MDFjZDAxZTFhOTM3MmFiMmQzOWUwNzAwZjEwOGI3YTZlNzM5MTcwZTBjZDI1ZWY0ZjdiYzlmZGNjOWI3MWRlOGQxYmU3ZTZlNDQ5MGFhMzVkMTkxYTI=
+    
+    # Get Kong Admin API URL from route
+    KONG_ADMIN_URL="http://kong-admin:8001"
+    
+    echo "Waiting for Kong to be ready..."
+    until curl -f $KONG_ADMIN_URL/status; do
+        echo "Kong is not ready yet. Waiting..."
+        sleep 5
+    done
+    
+    echo "Kong is ready! Configuring services and routes..."
+    
+    # Create Authentication Service
+    curl -i -X POST $KONG_ADMIN_URL/services/ \
+      --data "name=authentication-service" \
+      --data "url=http://authentication-service:8080"
+    
+    # Create Payment Service
+    curl -i -X POST $KONG_ADMIN_URL/services/ \
+      --data "name=payment-service" \
+      --data "url=http://payment-service:8080"
+    
+    # Create routes for Authentication Service
+    curl -i -X POST $KONG_ADMIN_URL/services/authentication-service/routes \
+      --data "name=auth-register" \
+      --data "paths[]=/api/auth/register" \
+      --data "methods[]=POST" \
+      --data "strip_path=false"
+    
+    curl -i -X POST $KONG_ADMIN_URL/services/authentication-service/routes \
+      --data "name=auth-login" \
+      --data "paths[]=/api/auth/login" \
+      --data "methods[]=POST" \
+      --data "strip_path=false"
+    
+    curl -i -X POST $KONG_ADMIN_URL/services/authentication-service/routes \
+      --data "name=auth-refresh" \
+      --data "paths[]=/api/auth/refresh" \
+      --data "methods[]=PUT" \
+      --data "strip_path=false"
+    
+    curl -i -X POST $KONG_ADMIN_URL/services/authentication-service/routes \
+      --data "name=auth-logout" \
+      --data "paths[]=/api/auth/logout" \
+      --data "methods[]=DELETE" \
+      --data "strip_path=false"
+    
+    # Create routes for Payment Service
+    curl -i -X POST $KONG_ADMIN_URL/services/payment-service/routes \
+      --data "name=payment-account" \
+      --data "paths[]=/api/payment/account" \
+      --data "methods[]=GET" \
+      --data "strip_path=false"
+    
+    curl -i -X POST $KONG_ADMIN_URL/services/payment-service/routes \
+      --data "name=payment-balance" \
+      --data "paths[]=/api/payment/balance" \
+      --data "methods[]=GET" \
+      --data "strip_path=false"
+    
+    curl -i -X POST $KONG_ADMIN_URL/services/payment-service/routes \
+      --data "name=payment-wallet" \
+      --data "paths[]=/api/payment/wallet" \
+      --data "methods[]=GET" \
+      --data "strip_path=false"
+    
+    curl -i -X POST $KONG_ADMIN_URL/services/payment-service/routes \
+      --data "name=payment-wallet-topup" \
+      --data "paths[]=/api/payment/wallet/topup" \
+      --data "methods[]=POST" \
+      --data "strip_path=false"
+    
+    # Enable CORS plugin
+    curl -i -X POST $KONG_ADMIN_URL/plugins/ \
+      --data "name=cors" \
+      --data "config.origins=*" \
+      --data "config.methods=GET,POST,PUT,DELETE,OPTIONS" \
+      --data "config.headers=Accept,Accept-Version,Content-Length,Content-MD5,Content-Type,Date,X-Auth-Token,Authorization,X-API-Key" \
+      --data "config.exposed_headers=X-Auth-Token" \
+      --data "config.credentials=true" \
+      --data "config.max_age=3600"
+    
+    # Enable Rate Limiting
+    curl -i -X POST $KONG_ADMIN_URL/plugins/ \
+      --data "name=rate-limiting" \
+      --data "config.minute=100" \
+      --data "config.hour=1000" \
+      --data "config.policy=local"
+    
+    # Create JWT consumer
+    curl -i -X POST $KONG_ADMIN_URL/consumers/ \
+      --data "username=payment-app"
+    
+    # Create JWT credentials
+    curl -i -X POST $KONG_ADMIN_URL/consumers/payment-app/jwt \
+      --data "algorithm=HS512" \
+      --data "key=$(echo $JWT_KEY | base64 -d)" \
+      --data "secret=$(echo $JWT_SECRET | base64 -d)"
+    
+    # Enable JWT plugin for Payment Service
+    curl -i -X POST $KONG_ADMIN_URL/services/payment-service/plugins \
+      --data "name=jwt" \
+      --data "config.secret_is_base64=false" \
+      --data "config.run_on_preflight=true" \
+      --data "config.claims_to_verify=exp"
+    
+    echo "Kong configuration completed!"
+    echo "Admin API URL: $KONG_ADMIN_URL"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kong-config-job
+  namespace: one-gate-payment
+  labels:
+    app: one-gate-payment
+    component: configuration
+spec:
+  template:
+    metadata:
+      labels:
+        app: one-gate-payment
+        component: configuration
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: kong-config
+          image: registry.redhat.io/ubi8/ubi:latest
+          command: ["/bin/bash", "/scripts/configure-kong.sh"]
+          env:
+            - name: NAMESPACE
+              value: one-gate-payment
+          volumeMounts:
+            - name: config-script
+              mountPath: /scripts
+      volumes:
+        - name: config-script
+          configMap:
+            name: kong-config-script
+            defaultMode: 0755

@@ -47,10 +47,8 @@ spec:
           resources:
             requests:
               memory: "512Mi"
-              cpu: "250m"
             limits:
               memory: "2Gi"
-              cpu: "1000m"
 
           # Ports
           ports:
@@ -207,7 +205,7 @@ spec:
           # Environment variables
           env:
             - name: FLYWAY_URL
-              value: "jdbc:postgresql://postgresql-service.one-gate-payment.svc.cluster.local:5432/one_gate_payment"
+              value: "jdbc:postgresql://postgresql-service:5432/one_gate_payment"
             - name: FLYWAY_USER
               valueFrom:
                 secretKeyRef:
@@ -229,10 +227,8 @@ spec:
           resources:
             requests:
               memory: "128Mi"
-              cpu: "100m"
             limits:
               memory: "512Mi"
-              cpu: "500m"
 
           # Volume mounts for flyway migrations
           volumeMounts:
