@@ -12,12 +12,13 @@ data:
     plugins:
       - name: cors
         config:
-          origins: ["*"]
+          origins: ["http://localhost:9002", "http://localhost:3000", "http://127.0.0.1:9002"]
           methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "X-Auth-Token", "Authorization", "X-API-Key"]
+          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "X-Auth-Token", "Authorization", "X-API-Key", "Origin", "X-Requested-With"]
           exposed_headers: ["X-Auth-Token"]
           credentials: true
           max_age: 3600
+          preflight_continue: false
       - name: rate-limiting
         config:
           minute: 100
@@ -39,19 +40,19 @@ data:
         routes:
           - name: auth-register
             paths: ["/api/auth/register"]
-            methods: ["POST"]
+            methods: ["POST", "OPTIONS"]
             strip_path: false
           - name: auth-login
             paths: ["/api/auth/login"]
-            methods: ["POST"]
+            methods: ["POST", "OPTIONS"]
             strip_path: false
           - name: auth-refresh
             paths: ["/api/auth/refresh"]
-            methods: ["PUT"]
+            methods: ["PUT", "OPTIONS"]
             strip_path: false
           - name: auth-logout
             paths: ["/api/auth/logout"]
-            methods: ["DELETE"]
+            methods: ["DELETE", "OPTIONS"]
             strip_path: false
       
       - name: payment-service
@@ -61,22 +62,22 @@ data:
           - name: jwt
             config:
               secret_is_base64: false
-              run_on_preflight: true
+              run_on_preflight: false
               claims_to_verify: ["exp"]
         routes:
           - name: payment-account
             paths: ["/api/payment/account"]
-            methods: ["GET"]
+            methods: ["GET", "OPTIONS"]
             strip_path: false
           - name: payment-balance
             paths: ["/api/payment/balance"]
-            methods: ["GET"]
+            methods: ["GET", "OPTIONS"]
             strip_path: false
           - name: payment-wallet
             paths: ["/api/payment/wallet"]
-            methods: ["GET"]
+            methods: ["GET", "OPTIONS"]
             strip_path: false
           - name: payment-wallet-topup
             paths: ["/api/payment/wallet/topup"]
-            methods: ["POST"]
+            methods: ["POST", "OPTIONS"]
             strip_path: false
