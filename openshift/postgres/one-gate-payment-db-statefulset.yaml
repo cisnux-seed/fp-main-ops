@@ -3,9 +3,6 @@ kind: StatefulSet
 metadata:
   name: postgresql-statefulset
   namespace: one-gate-payment
-  labels:
-    app: one-gate-payment-db
-    component: database
 spec:
   serviceName: postgresql-service
   replicas: 1
@@ -16,105 +13,70 @@ spec:
     metadata:
       labels:
         app: one-gate-payment-db
-        component: database
     spec:
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: "OnRootMismatch"
       containers:
         - name: postgresql
-          image: postgres:17-alpine
-          imagePullPolicy: IfNotPresent
-
-          # Environment variables from secret
+          image: quay.io/sclorg/postgresql-16-c9s:latest
           env:
-            - name: POSTGRES_USER
+            - name: POSTGRESQL_USER
               valueFrom:
                 secretKeyRef:
                   name: postgresql-secret
                   key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
+            - name: POSTGRESQL_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: postgresql-secret
                   key: POSTGRES_PASSWORD
-            - name: POSTGRES_DB
+            - name: POSTGRESQL_DATABASE
               valueFrom:
                 secretKeyRef:
                   name: postgresql-secret
                   key: POSTGRES_DB
-            - name: PGDATA
-              value: /var/lib/postgresql/data/pgdata
+            - name: POSTGRESQL_MAX_CONNECTIONS
+              value: "500"
+            - name: POSTGRESQL_SHARED_BUFFERS
+              value: "256MB"
+            - name: POSTGRESQL_EFFECTIVE_CACHE_SIZE
+              value: "1GB"
 
-          # Resource limits and requests
+          ports:
+            - containerPort: 5432
+              name: postgresql
+
+          volumeMounts:
+            - name: postgresql-storage
+              mountPath: /var/lib/pgsql/data
+
           resources:
             requests:
               memory: "512Mi"
             limits:
               memory: "2Gi"
 
-          # Ports
-          ports:
-            - containerPort: 5432
-              name: postgresql
-              protocol: TCP
-
-          # Volume mounts
-          volumeMounts:
-            - name: postgresql-storage
-              mountPath: /var/lib/postgresql/data
-            - name: postgresql-config-volume
-              mountPath: /etc/postgresql/postgresql.conf
-              subPath: postgresql.conf
-              readOnly: true
-
-          # Health checks
           livenessProbe:
             exec:
               command:
-                - /bin/sh
-                - -c
-                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h 127.0.0.1 -p 5432
-            initialDelaySeconds: 30
+                - /usr/libexec/check-container
+                - --live
+            initialDelaySeconds: 120
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
 
           readinessProbe:
             exec:
               command:
-                - /bin/sh
-                - -c
-                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h 127.0.0.1 -p 5432
+                - /usr/libexec/check-container
             initialDelaySeconds: 5
             periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 3
 
-          # Startup probe for initial database setup
-          startupProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h 127.0.0.1 -p 5432
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 30
-
-      # Volumes
-      volumes:
-        - name: postgresql-config-volume
-          configMap:
-            name: postgresql-config
-
-  # Volume claim template for persistent storage
   volumeClaimTemplates:
     - metadata:
         name: postgresql-storage
-        labels:
-          app: one-gate-payment-db
       spec:
-        accessModes:
-          - ReadWriteOnce
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 20Gi
@@ -137,107 +99,3 @@ spec:
       name: postgresql
   selector:
     app: one-gate-payment-db
----
-# Flyway Migration Job
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: flyway-migration-job
-  namespace: one-gate-payment
-  labels:
-    app: one-gate-payment-db
-    component: migration
-spec:
-  # Job will be retried up to 3 times if it fails
-  backoffLimit: 3
-  
-  # Job will be cleaned up after 24 hours of completion
-  ttlSecondsAfterFinished: 86400
-  
-  template:
-    metadata:
-      labels:
-        app: one-gate-payment-db
-        component: migration
-    spec:
-      restartPolicy: Never
-      
-      # Init container to wait for PostgreSQL to be ready
-      initContainers:
-        - name: wait-for-postgres
-          image: postgres:17-alpine
-          command:
-            - /bin/sh
-            - -c
-            - |
-              echo "Waiting for PostgreSQL to be ready..."
-              until pg_isready -h postgresql-service.one-gate-payment.svc.cluster.local -p 5432 -U $POSTGRES_USER -d $POSTGRES_DB; do
-                echo "PostgreSQL not ready yet, waiting 5 seconds..."
-                sleep 5
-              done
-              echo "PostgreSQL is ready!"
-          env:
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgresql-secret
-                  key: POSTGRES_USER
-            - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: postgresql-secret
-                  key: POSTGRES_DB
-
-      containers:
-        - name: flyway-migration
-          image: flyway/flyway:10-alpine
-          
-          # Flyway command arguments
-          args:
-            - -url=jdbc:postgresql://postgresql-service.one-gate-payment.svc.cluster.local:5432/one_gate_payment
-            - -locations=filesystem:/flyway/sql
-            - -validateMigrationNaming=true
-            - -baselineOnMigrate=true
-            - -connectRetries=10
-            - -connectRetriesInterval=5
-            - migrate
-
-          # Environment variables
-          env:
-            - name: FLYWAY_URL
-              value: "jdbc:postgresql://postgresql-service:5432/one_gate_payment"
-            - name: FLYWAY_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgresql-secret
-                  key: POSTGRES_USER
-            - name: FLYWAY_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgresql-secret
-                  key: POSTGRES_PASSWORD
-            - name: FLYWAY_LOCATIONS
-              value: "filesystem:/flyway/sql"
-            - name: FLYWAY_BASELINE_ON_MIGRATE
-              value: "true"
-            - name: FLYWAY_VALIDATE_MIGRATION_NAMING
-              value: "true"
-
-          # Resource limits for flyway job
-          resources:
-            requests:
-              memory: "128Mi"
-            limits:
-              memory: "512Mi"
-
-          # Volume mounts for flyway migrations
-          volumeMounts:
-            - name: flyway-migrations-volume
-              mountPath: /flyway/sql
-              readOnly: true
-
-      # Volumes
-      volumes:
-        - name: flyway-migrations-volume
-          configMap:
-            name: flyway-migrations
