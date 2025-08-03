@@ -74,34 +74,34 @@ spec:
             failureThreshold: 24
           resources:
             requests:
-              memory: "6Gi"
+              memory: "4Gi"
             limits:
-              memory: "6Gi"
+              memory: "5Gi"
       volumes:
         - name: sonarqube-config
           configMap:
             name: sonarqube-config
         - name: sonarqube-temp
-          emptyDir: {}
+          emptyDir: { }
   volumeClaimTemplates:
     - metadata:
         name: sonarqube-data
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: 2Gi
     - metadata:
         name: sonarqube-logs
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: 1Gi
     - metadata:
         name: sonarqube-extensions
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: 1Gi

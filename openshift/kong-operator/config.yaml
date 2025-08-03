@@ -8,75 +8,184 @@ data:
     _format_version: "3.0"
     _transform: true
 
-    # Global plugins (like your script)
     plugins:
       - name: cors
         config:
-          origins: ["*"]
-          methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "X-Auth-Token", "Authorization", "X-API-Key"]
-          exposed_headers: ["X-Auth-Token"]
+          origins: [ "http://localhost:9002", "http://localhost:3000", "http://127.0.0.1:9002" ]
+          methods: [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
+          headers: [ "Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "X-Auth-Token", "Authorization", "X-API-Key", "Origin", "X-Requested-With" ]
+          exposed_headers: [ "X-Auth-Token", "X-Request-ID" ]
           credentials: true
           max_age: 3600
+          preflight_continue: false
+      
+      - name: response-transformer
+        config:
+          add:
+            headers:
+              - "Strict-Transport-Security:max-age=31536000; includeSubDomains"
+              - "X-Content-Type-Options:nosniff"
+              - "Content-Security-Policy:default-src 'none'; frame-ancestors 'none'"
+              - "Cache-Control:no-store, no-cache, must-revalidate"
+              - "Referrer-Policy:strict-origin-when-cross-origin"
+              - "Cross-Origin-Resource-Policy:same-origin"
+              - "X-API-Version:v1"
+          remove:
+            headers:
+              - "X-Application-Context"
+              - "X-Powered-By"
+              - "Server"
+      
+      - name: request-size-limiting
+        config:
+          allowed_payload_size: 10
+          size_unit: megabytes
+          require_content_length: false
+      
+      - name: request-transformer
+        config:
+          add:
+            headers:
+              - "X-Forwarded-Proto:$(scheme)"
+              - "X-Forwarded-Host:$(host)"
+              - "X-Forwarded-Port:$(port)"
+      
       - name: rate-limiting
+        consumer: ojk
+        config:
+          minute: 200
+          hour: 2000
+          day: 20000
+          policy: local
+          fault_tolerant: true
+          hide_client_headers: false
+          limit_by: consumer
+
+      - name: rate-limiting
+        consumer: bank-indonesia
         config:
           minute: 100
           hour: 1000
+          day: 10000
           policy: local
+          fault_tolerant: true
+          hide_client_headers: false
+          limit_by: consumer
 
-    # JWT Consumer (exactly like your script)
     consumers:
       - username: payment-app
         jwt_secrets:
           - algorithm: HS512
             key: "https://bni.co.id"
             secret: "e2926909a5c43ecea3ffa3b65fc747089755d687f401cd01e1a9372ab2d39e0700f108b7a6e739170e0cd25ef4f7bc9fdcc9b71de8d1be7e6e4490aa35d191a2"
+      
+      - username: bank-indonesia
+        custom_id: 8f7e6d5c-4b3a-4829-9876-5432109876ab
+        tags:
+          - government
+          - central-bank
+        keyauth_credentials:
+          - key: a1b2c3d4-e5f6-4789-abcd-ef0123456789
+            tags:
+              - bank-indonesia-key
+      
+      - username: ojk
+        custom_id: 2e8f6c4a-9b7d-4531-8642-97531086420f
+        tags:
+          - government
+          - financial-authority
+        keyauth_credentials:
+          - key: f9e8d7c6-b5a4-4928-9371-8642097531ab
+            tags:
+              - ojk-key
 
-    # Services and Routes (matching your script exactly)
     services:
       - name: authentication-service
         url: http://authentication-service:8080
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 100
+              hour: 1000
+              policy: local
         routes:
           - name: auth-register
-            paths: ["/api/auth/register"]
-            methods: ["POST"]
+            paths: [ "/api/auth/register" ]
+            methods: [ "POST", "OPTIONS" ]
             strip_path: false
           - name: auth-login
-            paths: ["/api/auth/login"]
-            methods: ["POST"]
+            paths: [ "/api/auth/login" ]
+            methods: [ "POST", "OPTIONS" ]
             strip_path: false
           - name: auth-refresh
-            paths: ["/api/auth/refresh"]
-            methods: ["PUT"]
+            paths: [ "/api/auth/refresh" ]
+            methods: [ "PUT", "OPTIONS" ]
             strip_path: false
           - name: auth-logout
-            paths: ["/api/auth/logout"]
-            methods: ["DELETE"]
+            paths: [ "/api/auth/logout" ]
+            methods: [ "DELETE", "OPTIONS" ]
             strip_path: false
       
       - name: payment-service
         url: http://payment-service:8080
-        # JWT plugin applied to the entire service (like your script)
         plugins:
           - name: jwt
             config:
               secret_is_base64: false
-              run_on_preflight: true
-              claims_to_verify: ["exp"]
+              run_on_preflight: false
+              claims_to_verify: [ "exp" ]
+              cookie_names: [ "auth-token" ]
+              header_names: [ "authorization" ]
+          - name: rate-limiting
+            config:
+              minute: 100
+              hour: 1000
+              policy: local
         routes:
           - name: payment-account
-            paths: ["/api/payment/account"]
-            methods: ["GET"]
+            paths: [ "/api/payment/account" ]
+            methods: [ "GET", "OPTIONS" ]
             strip_path: false
           - name: payment-balance
-            paths: ["/api/payment/balance"]
-            methods: ["GET"]
+            paths: [ "/api/payment/balance" ]
+            methods: [ "GET", "OPTIONS" ]
             strip_path: false
           - name: payment-wallet
-            paths: ["/api/payment/wallet"]
-            methods: ["GET"]
+            paths: [ "/api/payment/wallet" ]
+            methods: [ "GET", "OPTIONS" ]
             strip_path: false
           - name: payment-wallet-topup
-            paths: ["/api/payment/wallet/topup"]
-            methods: ["POST"]
+            paths: [ "/api/payment/wallet/topup" ]
+            methods: [ "POST", "OPTIONS" ]
             strip_path: false
+      
+      - name: transaction-service
+        url: http://transaction-service:8080
+        plugins:
+          - name: key-auth
+            config:
+              key_names: [ "X-API-Key" ]
+              key_in_header: true
+              key_in_query: true
+              key_in_body: false
+              hide_credentials: false
+              run_on_preflight: false
+          - name: request-transformer
+            config:
+              add:
+                headers:
+                  - "X-Service-Type:transaction-api"
+                  - "X-API-Version:v1"
+                  - "X-Gateway:kong"
+                  - "X-Forwarded-For:$(client_ip)"
+                  - "X-API-Key:$(headers['X-API-Key'])"
+        routes:
+          - name: historical-transaction-list
+            paths: [ "/api/transaction/histories" ]
+            methods: [ "GET", "OPTIONS" ]
+            strip_path: false
+          - name: historical-transaction-details
+            paths: [ "/api/transaction/histories/(?<trx_history_id>[^/]+)$" ]
+            methods: [ "GET", "OPTIONS" ]
+            strip_path: false
+            regex_priority: 10

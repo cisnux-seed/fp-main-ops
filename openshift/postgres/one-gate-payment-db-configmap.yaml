@@ -8,7 +8,7 @@ metadata:
 data:
   postgresql.conf: |
     # PostgreSQL configuration for payment system
-    max_connections = 200
+    max_connections = 500
     shared_buffers = 256MB
     effective_cache_size = 1GB
     work_mem = 4MB
@@ -27,7 +27,6 @@ data:
     password_encryption = 'md5'
     
     # Performance for financial transactions
-    checkpoint_segments = 32
     checkpoint_completion_target = 0.9
     wal_buffers = 16MB
     default_statistics_target = 100

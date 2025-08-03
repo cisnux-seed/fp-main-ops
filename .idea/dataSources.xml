@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="one_gate_payment@localhost" uuid="469d0b9d-2c65-4977-b449-a5f37cbf05fb">
+    <data-source source="LOCAL" name="one_gate_payment@localhost" uuid="82f7ea3b-4bc6-4211-8964-863df41b444b">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
